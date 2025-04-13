@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 250, 250, 250;
+    --background-end-rgb: 240, 240, 240;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply text-gray-800 bg-gray-50 font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight;
+  }
+}
+
+@layer components {
+  .main {
+    @apply flex flex-col h-screen p-4 max-w-5xl mx-auto gap-4;
+  }
+
+  .configSection {
+    @apply bg-white p-4 rounded-lg shadow;
+  }
+
+  .actionRowsWrap {
+    @apply flex flex-col gap-2;
+  }
+
+  .actionRow {
+    @apply flex items-center gap-2 flex-wrap;
+  }
+
+  .videoSectionWrap {
+    @apply mt-4 flex flex-col;
+  }
+
+  .videoWrap {
+    @apply w-full max-w-xl mx-auto overflow-hidden rounded-lg shadow-lg;
+  }
+
+  .videoEle {
+    @apply w-full;
+  }
+
+  .show {
+    @apply block;
+  }
+
+  .hide {
+    @apply hidden;
+  }
+
+  .switchWrap {
+    @apply flex items-center gap-2;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-900 border border-gray-200 hover:bg-gray-100 h-10 px-4 py-2;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 h-10 px-4 py-2;
+  }
+
+  .input {
+    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .card {
+    @apply rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm transition-all hover:shadow;
+  }
+
+  .formGroup {
+    @apply mb-4;
+  }
+}
+
+/* Custom scrollbar styling */
+@layer utilities {
+  /* Width */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+  
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+}
