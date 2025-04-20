@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Meet Bot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #1a73e8;
+      margin-top: 0;
+    }
+    
+    .status-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    .status-indicator {
+      padding: 5px 10px;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+    
+    .connected {
+      background-color: #34a853;
+      color: white;
+    }
+    
+    .disconnected {
+      background-color: #ea4335;
+      color: white;
+    }
+    
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px 0 0 4px;
+      font-size: 16px;
+    }
+    
+    button {
+      padding: 10px 15px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    button:hover {
+      background-color: #174ea6;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .actions button {
+      border-radius: 4px;
+    }
+    
+    .transcript-container {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+      margin-bottom: 20px;
+    }
+    
+    .transcript-line {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .human-message {
+      background-color: #e8f0fe;
+    }
+    
+    .bot-message {
+      background-color: #e6f4ea;
+    }
+    
+    .bot-proactive {
+      background-color: #fef6e0;
+    }
+    
+    .timestamp {
+      color: #5f6368;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+    
+    .speaker {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
+    .bot-name {
+      color: #1a73e8;
+      font-weight: bold;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #5f6368;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Google Meet Bot Control Panel</h1>
+    
+    <div class="status-bar">
+      Connection Status: <span id="connectionStatus" class="status-indicator disconnected">Disconnected</span>
+      <span id="botStatus"></span>
+    </div>
+    
+    <div class="input-group">
+      <input type="text" id="meetingUrlInput" placeholder="Enter Google Meet URL" />
+      <button id="joinButton">Join Meeting</button>
+    </div>
+    
+    <div class="actions">
+      <button id="leaveButton">Leave Meeting</button>
+      <button id="clearButton">Clear Transcript</button>
+      <button id="refreshButton">Refresh Transcript</button>
+    </div>
+    
+    <h2>Live Meeting Transcript</h2>
+    <div id="transcriptContainer" class="transcript-container">
+      <div class="loading">Waiting for transcript data...</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const connectionStatus = document.getElementById('connectionStatus');
+      const botStatus = document.getElementById('botStatus');
+      const meetingUrlInput = document.getElementById('meetingUrlInput');
+      const joinButton = document.getElementById('joinButton');
+      const leaveButton = document.getElementById('leaveButton');
+      const clearButton = document.getElementById('clearButton');
+      const refreshButton = document.getElementById('refreshButton');
+      const transcriptContainer = document.getElementById('transcriptContainer');
+      
+      let isConnected = false;
+      let socket;
+
+      // Connect to WebSocket
+      function connectSocket() {
+        // Initialize Socket.io connection
+        socket = io();
+        
+        // Connection established
+        socket.on('connect', () => {
+          connectionStatus.textContent = 'Connected';
+          connectionStatus.classList.remove('disconnected');
+          connectionStatus.classList.add('connected');
+          isConnected = true;
+          console.log('Socket connected:', socket.id);
+        });
+        
+        // Connection lost
+        socket.on('disconnect', () => {
+          connectionStatus.textContent = 'Disconnected';
+          connectionStatus.classList.remove('connected');
+          connectionStatus.classList.add('disconnected');
+          isConnected = false;
+          console.log('Socket disconnected');
+        });
+        
+        // Receive status updates
+        socket.on('status', (data) => {
+          botStatus.textContent = data.inMeeting 
+            ? `In meeting as: ${data.botName}` 
+            : 'Not in a meeting';
+            
+          if (data.transcript) {
+            updateTranscript(data.transcript);
+          }
+        });
+        
+        // Receive transcript updates
+        socket.on('transcript_update', (data) => {
+          addTranscriptLine(data.speaker, data.text, data.timestamp, 'human-message');
+        });
+        
+        // Receive bot responses
+        socket.on('bot_response', (data) => {
+          addTranscriptLine(data.botName, data.text, data.timestamp, 'bot-message');
+        });
+        
+        // Handle errors
+        socket.on('error', (data) => {
+          alert('Error: ' + data.message);
+        });
+        
+        // Handle meeting joined confirmation
+        socket.on('meeting_joined', (data) => {
+          alert('Joined meeting: ' + data.url);
+        });
+        
+        // Handle meeting left confirmation
+        socket.on('meeting_left', () => {
+          alert('Left meeting');
+        });
+      }
+      
+      // Add a single line to the transcript
+      function addTranscriptLine(speaker, text, timestamp, className) {
+        const line = document.createElement('div');
+        line.className = `transcript-line ${className}`;
+        
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'timestamp';
+        timestampSpan.textContent = new Date(timestamp).toLocaleTimeString();
+        
+        const speakerSpan = document.createElement('span');
+        speakerSpan.className = 'speaker';
+        speakerSpan.textContent = speaker + ':';
+        
+        const textSpan = document.createElement('span');
+        textSpan.textContent = ' ' + text;
+        
+        line.appendChild(timestampSpan);
+        line.appendChild(speakerSpan);
+        line.appendChild(textSpan);
+        
+        transcriptContainer.appendChild(line);
+        transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+      }
+      
+      // Update the entire transcript
+      function updateTranscript(text) {
+        if (!text) {
+          transcriptContainer.innerHTML = '<div class="loading">No transcript data available</div>';
+          return;
+        }
+        
+        transcriptContainer.innerHTML = '';
+        const lines = text.split('\n');
+        
+        lines.forEach(line => {
+          if (!line.trim()) return;
+          
+          const match = line.match(/\[(.*?)\] (.*?): (.*)/);
+          if (match) {
+            const timestamp = match[1];
+            const speaker = match[2];
+            const text = match[3];
+            
+            let className = 'human-message';
+            if (speaker.includes('(AI)')) {
+              className = 'bot-message';
+            } else if (speaker.includes('(AI PROACTIVE)')) {
+              className = 'bot-proactive';
+            }
+            
+            addTranscriptLine(speaker, text, new Date(timestamp), className);
+          } else {
+            // Fall back for non-matching lines
+            const div = document.createElement('div');
+            div.textContent = line;
+            transcriptContainer.appendChild(div);
+          }
+        });
+      }
+      
+      // Join meeting handler
+      joinButton.addEventListener('click', function() {
+        const meetingUrl = meetingUrlInput.value.trim();
+        if (!meetingUrl || !isConnected) return;
+        
+        socket.emit('join_meeting', { url: meetingUrl });
+      });
+      
+      // Leave meeting handler
+      leaveButton.addEventListener('click', function() {
+        if (!isConnected) return;
+        socket.emit('leave_meeting');
+      });
+      
+      // Clear transcript handler
+      clearButton.addEventListener('click', function() {
+        fetch('/api/transcript/clear', { method: 'POST' })
+          .then(response => {
+            if (response.ok) {
+              transcriptContainer.innerHTML = '<div class="loading">Transcript cleared</div>';
+            }
+          })
+          .catch(error => console.error('Error clearing transcript:', error));
+      });
+      
+      // Refresh transcript handler
+      refreshButton.addEventListener('click', function() {
+        if (isConnected) {
+          socket.emit('get_transcript');
+        } else {
+          fetch('/api/transcript')
+            .then(response => response.json())
+            .then(data => {
+              updateTranscript(data.text);
+            })
+            .catch(error => console.error('Error refreshing transcript:', error));
+        }
+      });
+      
+      // Initialize
+      connectSocket();
+    });
+  </script>
+</body>
+</html> 
