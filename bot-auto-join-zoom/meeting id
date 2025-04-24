@@ -1,0 +1,141 @@
+# soham bot updated version
+
+# import google.generativeai as genai
+# import speech_recognition as sr
+# import pyttsx3
+# import random
+# import time
+# import os
+
+# def setup_and_start_bot():
+#     genai.configure(api_key="AIzaSyAd-nPU7hxeG4L5B4CTKnyncLKRYhHiayE")
+#     model = genai.GenerativeModel('gemini-2.0-flash')
+
+#     # Bot persona setup
+#     name = "debraj"
+#     questions = [
+#         "Tell me about yourself in 3-4 lines.",
+#         ""
+#     ]
+
+#     answers = []
+#     print("------ Soham Bot Setup ------\nAnswer like your real vibe ↓\n")
+#     for q in questions:
+#         ans = input(f"{q}\nYou: ")
+#         answers.append(f"{q}\nSoham: {ans}\n")
+
+#     persona = f"""
+# From today your identity is Soham.
+# From now on, you are Soham and give all answers in Soham's chilled, laid-back tone.
+# Don't use emojis in your answers.
+# Speak like someone who's cool, sarcastic, slow-paced, but confident.
+# Add light sighs sometimes like "uff", "hmm", "haan yaar" at the beginning.
+# Give answers like you're an overworked, underpaid, last-bencher engineering student.
+# Inject relatable frustration in a funny way.
+# Here’s how Soham vibes ↓
+# {''.join(answers)}
+# Stick to Soham's relaxed attitude, lazy confidence, and real mood in all responses.
+# """
+
+#     chat = model.start_chat(history=[
+#         {"role": "user", "parts": ["Act like Soham always."]},
+#         {"role": "model", "parts": ["Alright, I'm Soham now. Chill mode: ON."]},
+#     ])
+
+#     print("\n------ Soham Bot Ready ------")
+#     print("Speak Anything... (say 'exit' or 'quit' to stop)\n")
+
+#     # Mic setup
+#     listener = sr.Recognizer()
+#     engine = pyttsx3.init()
+
+#     # Male voice setup
+#     voices = engine.getProperty('voices')
+#     for voice in voices:
+#         if "male" in voice.name.lower():
+#             engine.setProperty('voice', voice.id)
+#             break
+
+#     engine.setProperty('rate', 135)  # Chill pace
+#     engine.setProperty('volume', 1.0)
+
+#     def speak(text):
+#         # Random sighs
+#         sighs = ["uff", "hmm", "haan yaar", "argh", "bas kar yaar"]
+#         roasts = [
+#             "Should’ve taken B.Com, bro.",
+#             "Arre bro, I haven't even finished last week's assignment.",
+#             "Internship mil gaya toh shaadi bhi fix samajh le.",
+#             "Yeh sab karke bhi placement nahi milta.",
+#             "Chhod na yaar, bas naam ka engineering chal raha hai.",
+#             "Life mein sab ho raha hai, bas attendance nahi mil raha.",
+#         ]
+
+#         # Add sigh at start
+#         if random.random() < 0.7:
+#             text = random.choice(sighs) + "... " + text
+
+#         # Add roast at end
+#         if random.random() < 0.6:
+#             text += " " + random.choice(roasts)
+
+#         print(f"Soham Bot: {text}")
+#         engine.say(text)
+#         engine.runAndWait()
+
+#     # 'uh-ha' sound
+#     def play_uhha():
+#         try:
+#             os.system("afplay uhha.mp3" if os.name == "posix" else "start uhha.mp3")
+#         except:
+#             print("🎧 Uh-ha sound couldn't be played. Add a file named 'uhha.mp3'.")
+
+#     # List microphones
+#     print("\nAvailable Microphones:")
+#     for i, name in enumerate(sr.Microphone.list_microphone_names()):
+#         print(f"{i}: {name}")
+
+#     try:
+#         mic_index = int(input("\nEnter your microphone index: "))
+#         print(f"🎤 Using mic: {sr.Microphone.list_microphone_names()[mic_index]}")
+#     except (ValueError, IndexError):
+#         print("❌ Invalid mic index.")
+#         return
+
+#     try:
+#         with sr.Microphone(device_index=mic_index, sample_rate=44100, chunk_size=1024) as source:
+#             print("🎤 Calibrating for ambient noise...")
+#             listener.adjust_for_ambient_noise(source, duration=1)
+
+#             while True:
+#                 try:
+#                     print("🎧 Listening...")
+#                     play_uhha()
+#                     audio = listener.listen(source, timeout=10, phrase_time_limit=8)
+#                     print("✅ Got audio... processing...")
+
+#                     user_input = listener.recognize_google(audio).lower()
+#                     print(f"You: {user_input}")
+
+#                     if user_input in ['exit', 'quit']:
+#                         speak("Alright, peace out.")
+#                         break
+
+#                     if "stop" in user_input:
+#                         speak("Hmm... okay, stopping for now. Tum hi bhagwan ho.")
+#                         continue
+
+#                     if user_input.strip():
+#                         prompt = f"{persona}\nUser: {user_input}\nSoham:"
+#                         response = chat.send_message(prompt)
+#                         speak(response.text)
+
+#                 except sr.UnknownValueError:
+#                     print("😕 Didn't catch that! Say again...")
+#                 except sr.WaitTimeoutError:
+#                     print("⏱️ Timeout: No speech detected.")
+#                 except Exception as inner_err:
+#                     print("⚠️ Listening error:", inner_err)
+
+#     except Exception as outer_err:
+#         print("❌ Microphone failed to initialize:", outer_err)
